@@ -58,12 +58,12 @@ export function MinimaxConfigFields({
         label="API Key"
         value={
           isCreate
-            ? values!.url
+            ? values!.apiKey ?? ""
             : eff("adapterConfig", "apiKey", String(config.apiKey ?? ""))
         }
         onCommit={(v) =>
           isCreate
-            ? set!({ url: v })
+            ? set!({ apiKey: v })
             : mark("adapterConfig", "apiKey", v || undefined)
         }
         placeholder="your-minimax-api-key"
