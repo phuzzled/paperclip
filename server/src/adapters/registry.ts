@@ -53,6 +53,14 @@ import {
   agentConfigurationDoc as openclawGatewayAgentConfigurationDoc,
   models as openclawGatewayModels,
 } from "@paperclipai/adapter-openclaw-gateway";
+import {
+  execute as minimaxExecute,
+  testEnvironment as minimaxTestEnvironment,
+} from "@paperclipai/adapter-minimax/server";
+import {
+  agentConfigurationDoc as minimaxAgentConfigurationDoc,
+  models as minimaxModels,
+} from "@paperclipai/adapter-minimax";
 import { listCodexModels } from "./codex-models.js";
 import { listCursorModels } from "./cursor-models.js";
 import {
@@ -146,6 +154,15 @@ const openclawGatewayAdapter: ServerAdapterModule = {
   agentConfigurationDoc: openclawGatewayAgentConfigurationDoc,
 };
 
+const minimaxAdapter: ServerAdapterModule = {
+  type: "minimax",
+  execute: minimaxExecute,
+  testEnvironment: minimaxTestEnvironment,
+  models: minimaxModels,
+  supportsLocalAgentJwt: false,
+  agentConfigurationDoc: minimaxAgentConfigurationDoc,
+};
+
 const openCodeLocalAdapter: ServerAdapterModule = {
   type: "opencode_local",
   execute: openCodeExecute,
@@ -196,6 +213,7 @@ const adaptersByType = new Map<string, ServerAdapterModule>(
     cursorLocalAdapter,
     geminiLocalAdapter,
     openclawGatewayAdapter,
+    minimaxAdapter,
     hermesLocalAdapter,
     processAdapter,
     httpAdapter,
