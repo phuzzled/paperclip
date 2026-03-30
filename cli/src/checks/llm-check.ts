@@ -1,6 +1,9 @@
 import type { PaperclipConfig } from "../config/schema.js";
 import type { CheckResult } from "./index.js";
 
+const MINIMAX_API_BASE_URL = "https://api.minimax.io/anthropic";
+const MINIMAX_MODEL = "MiniMax-M2.7";
+
 export async function llmCheck(config: PaperclipConfig): Promise<CheckResult> {
   if (!config.llm) {
     return {
@@ -49,6 +52,45 @@ export async function llmCheck(config: PaperclipConfig): Promise<CheckResult> {
         name: "LLM provider",
         status: "warn",
         message: `Claude API returned status ${res.status}`,
+      };
+    } else if (config.llm.provider === "minimax") {
+      const resolvedApiKey = process.env.MINIMAX_API_KEY?.trim() || config.llm.apiKey;
+      if (!resolvedApiKey) {
+        return {
+          name: "LLM provider",
+          status: "pass",
+          message: "MiniMax configured but no API key set (optional)",
+        };
+      }
+      const res = await fetch(`${MINIMAX_API_BASE_URL}/v1/messages`, {
+        method: "POST",
+        headers: {
+          "x-api-key": resolvedApiKey,
+          "anthropic-version": "2023-06-01",
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          model: MINIMAX_MODEL,
+          max_tokens: 1,
+          messages: [{ role: "user", content: "hi" }],
+        }),
+      });
+      if (res.ok || res.status === 400) {
+        return { name: "LLM provider", status: "pass", message: "MiniMax API key is valid" };
+      }
+      if (res.status === 401) {
+        return {
+          name: "LLM provider",
+          status: "fail",
+          message: "MiniMax API key is invalid (401)",
+          canRepair: false,
+          repairHint: "Run `paperclipai configure --section llm`",
+        };
+      }
+      return {
+        name: "LLM provider",
+        status: "warn",
+        message: `MiniMax API returned status ${res.status}`,
       };
     } else {
       const res = await fetch("https://api.openai.com/v1/models", {
