@@ -55,6 +55,8 @@ import {
 } from "@paperclipai/adapter-openclaw-gateway";
 import {
   execute as minimaxExecute,
+  listMinimaxSkills,
+  syncMinimaxSkills,
   testEnvironment as minimaxTestEnvironment,
 } from "@paperclipai/adapter-minimax/server";
 import {
@@ -158,6 +160,8 @@ const minimaxAdapter: ServerAdapterModule = {
   type: "minimax",
   execute: minimaxExecute,
   testEnvironment: minimaxTestEnvironment,
+  listSkills: listMinimaxSkills,
+  syncSkills: syncMinimaxSkills,
   models: minimaxModels,
   supportsLocalAgentJwt: false,
   agentConfigurationDoc: minimaxAgentConfigurationDoc,

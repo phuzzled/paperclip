@@ -1,8 +1,19 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { promises as fs } from "node:fs";
 import type {
   AdapterExecutionContext,
   AdapterExecutionResult,
 } from "@paperclipai/adapter-utils";
-import { asNumber, asString, parseObject } from "@paperclipai/adapter-utils/server-utils";
+import {
+  asNumber,
+  asString,
+  parseObject,
+  readPaperclipRuntimeSkillEntries,
+  resolvePaperclipDesiredSkillNames,
+} from "@paperclipai/adapter-utils/server-utils";
+
+const __moduleDir = path.dirname(fileURLToPath(import.meta.url));
 
 const DEFAULT_BASE_URL = "https://api.minimax.io/anthropic";
 const DEFAULT_MODEL = "MiniMax-M2.7";
@@ -21,14 +32,43 @@ function buildMessages(context: Record<string, unknown>): Array<{ role: string; 
   return messages;
 }
 
-function buildSystemPrompt(config: Record<string, unknown>, context: Record<string, unknown>): string | null {
+const SKILL_SEPARATOR = "\n\n---\n\n";
+
+async function buildSkillsContent(
+  config: Record<string, unknown>,
+  onLog: AdapterExecutionContext["onLog"],
+): Promise<string> {
+  const availableEntries = await readPaperclipRuntimeSkillEntries(config, __moduleDir);
+  const desiredSkills = resolvePaperclipDesiredSkillNames(config, availableEntries);
+  const desiredSet = new Set(desiredSkills);
+  const sections: string[] = [];
+  for (const entry of availableEntries) {
+    if (!desiredSet.has(entry.key)) continue;
+    try {
+      const content = await fs.readFile(path.join(entry.source, "SKILL.md"), "utf8");
+      sections.push(content.trim());
+    } catch (err) {
+      await onLog("stderr", `[minimax] Warning: could not read SKILL.md for skill "${entry.key}": ${err instanceof Error ? err.message : String(err)}\n`);
+    }
+  }
+  return sections.join(SKILL_SEPARATOR);
+}
+
+async function buildSystemPrompt(
+  config: Record<string, unknown>,
+  context: Record<string, unknown>,
+  onLog: AdapterExecutionContext["onLog"],
+): Promise<string | null> {
   const configSystem = asString(config.systemPrompt, "").trim();
-  if (configSystem) return configSystem;
-
   const contextSystem = asString(context.systemPrompt, "").trim();
-  if (contextSystem) return contextSystem;
+  const basePrompt = configSystem || contextSystem || "";
 
-  return null;
+  const skillsContent = await buildSkillsContent(config, onLog);
+
+  if (!basePrompt && !skillsContent) return null;
+  if (!skillsContent) return basePrompt;
+  if (!basePrompt) return skillsContent;
+  return `${basePrompt}${SKILL_SEPARATOR}${skillsContent}`;
 }
 
 export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExecutionResult> {
@@ -39,7 +79,7 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
   const model = asString(config.model, DEFAULT_MODEL).trim() || DEFAULT_MODEL;
   const baseUrl = asString(config.baseUrl, DEFAULT_BASE_URL).trim() || DEFAULT_BASE_URL;
   const timeoutSec = asNumber(config.timeoutSec, DEFAULT_TIMEOUT_SEC);
-  const systemPrompt = buildSystemPrompt(config, context);
+  const systemPrompt = await buildSystemPrompt(config, context, ctx.onLog);
 
   if (!apiKey) {
     const msg = "[minimax] Error: apiKey is required in adapter configuration.\n";
