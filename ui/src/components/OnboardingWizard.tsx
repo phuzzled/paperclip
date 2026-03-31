@@ -68,7 +68,8 @@ type AdapterType =
   | "pi_local"
   | "cursor"
   | "http"
-  | "openclaw_gateway";
+  | "openclaw_gateway"
+  | "minimax";
 
 const DEFAULT_TASK_DESCRIPTION = `You are the CEO. You set the direction for the company.
 
@@ -853,6 +854,12 @@ export function OnboardingWizard() {
                             label: "Hermes Agent",
                             icon: HermesIcon,
                             desc: "Local multi-provider agent"
+                          },
+                          {
+                            value: "minimax" as const,
+                            label: "MiniMax",
+                            icon: Sparkles,
+                            desc: "MiniMax API agent"
                           },
                           {
                             value: "openclaw_gateway" as const,
