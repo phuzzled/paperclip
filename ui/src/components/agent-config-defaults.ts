@@ -17,6 +17,7 @@ export const defaultCreateValues: CreateConfigValues = {
   envVars: "",
   envBindings: {},
   url: "",
+  apiKey: "",
   bootstrapPrompt: "",
   payloadTemplateJson: "",
   workspaceStrategyType: "project_primary",

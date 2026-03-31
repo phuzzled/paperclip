@@ -37,6 +37,7 @@ const SUPPORTED_ADVANCED_ADAPTER_TYPES = new Set<CreateConfigValues["adapterType
   "cursor",
   "hermes_local",
   "openclaw_gateway",
+  "minimax",
 ]);
 
 function createValuesForAdapterType(
