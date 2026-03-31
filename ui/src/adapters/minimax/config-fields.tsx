@@ -51,6 +51,7 @@ export function MinimaxConfigFields({
   config,
   eff,
   mark,
+  models,
 }: AdapterConfigFieldsProps) {
   return (
     <>
@@ -70,21 +71,43 @@ export function MinimaxConfigFields({
       />
 
       <Field label="Model">
-        <DraftInput
-          value={
-            isCreate
-              ? values!.model
-              : eff("adapterConfig", "model", String(config.model ?? "MiniMax-M2.7"))
-          }
-          onCommit={(v) =>
-            isCreate
-              ? set!({ model: v })
-              : mark("adapterConfig", "model", v || undefined)
-          }
-          immediate
-          className={inputClass}
-          placeholder="MiniMax-M2.7"
-        />
+        {models.length > 0 ? (
+          <select
+            value={
+              isCreate
+                ? values!.model || models[0].id
+                : eff("adapterConfig", "model", String(config.model ?? models[0].id))
+            }
+            onChange={(e) =>
+              isCreate
+                ? set!({ model: e.target.value })
+                : mark("adapterConfig", "model", e.target.value || undefined)
+            }
+            className={inputClass}
+          >
+            {models.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.label}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <DraftInput
+            value={
+              isCreate
+                ? values!.model
+                : eff("adapterConfig", "model", String(config.model ?? "MiniMax-M2.7"))
+            }
+            onCommit={(v) =>
+              isCreate
+                ? set!({ model: v })
+                : mark("adapterConfig", "model", v || undefined)
+            }
+            immediate
+            className={inputClass}
+            placeholder="MiniMax-M2.7"
+          />
+        )}
       </Field>
 
       {!isCreate && (
