@@ -29,7 +29,7 @@ async function buildMinimaxSkillSnapshot(config: Record<string, unknown>): Promi
     sourcePath: entry.source,
     targetPath: null,
     detail: desiredSet.has(entry.key)
-      ? "Will be included in the system prompt on the next run."
+      ? "Injected into the system prompt on every run."
       : null,
     required: Boolean(entry.required),
     requiredReason: entry.requiredReason ?? null,
